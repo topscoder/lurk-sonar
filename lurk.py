@@ -31,9 +31,13 @@ def write_file_in_dir(fullname, content, is_json=True):
     return True
 
 
-def update_progress(value):
+def update_progress(project="", file=""):
+    progress = {
+        "project": project,
+        "file": file
+    }
     with open("progress.rc", "w+") as f:
-        f.write(value)
+        f.write(json.dumps(progress, indent=4))
 
 
 def get_progress():
@@ -52,8 +56,7 @@ r = requests.get(f"{base_url}/api/projects/search", auth=(username, password))
 js = r.json()
 
 print("# Dump to projects.json ...")
-with open("lurked/projects.json", "w+") as f:
-    f.write(json.dumps(js, indent=4))
+write_file_in_dir("lurked/projects.json", json.dumps(js, indent=4))
 
 update_progress("lurked/projects.json")
 
@@ -76,13 +79,13 @@ for key, value in js.items():
         sources = rp.json()
         write_file_in_dir(f"lurked/{project_key}.json", sources)
 
-        update_progress(f"lurked/{project_key}.json")
+        update_progress(project_key, f"lurked/{project_key}.json")
 
         # get source code for each project file
         file_list = sources["fileDataByModuleAndPath"][project_key]
         for filename in file_list:
             # fetch source code and store in local file
-            update_progress(f"project:{project_key}\nfilename:{filename}")
+            update_progress(project_key, filename)
 
             rs = requests.get(
                 f"{base_url}/api/sources/index?key={project_key}&resource={project_key}:{filename}",
